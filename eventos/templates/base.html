@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block titulo %}Eventos{% endblock %}</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.9/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-yEPZ7jP9S0QKiUQ0m3jjsO4ProIW7wvR9gXkI7JOGa2XVsw53Yke2bsdkBbjmmiX"
+        crossorigin="anonymous"
+    >
+</head>
+<body>
+
+    <nav class="navbar bg-body-tertiary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'lista_evento' %}">
+                Gestión de eventos
+            </a>
+
+            <button
+                class="navbar-toggler"
+                type="button"
+                data-bs-toggle="offcanvas"
+                data-bs-target="#menuEventos"
+                aria-controls="menuEventos"
+                aria-label="Abrir menú de navegación"
+            >
+                <span class="navbar-toggler-icon" aria-hidden="true"></span>
+            </button>
+
+            <div
+                class="offcanvas offcanvas-end"
+                tabindex="-1"
+                id="menuEventos"
+                aria-labelledby="menuEventosLabel"
+            >
+                <div class="offcanvas-header">
+                    <h5 class="offcanvas-title" id="menuEventosLabel">
+                        Menú
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="offcanvas"
+                        aria-label="Cerrar"
+                    ></button>
+                </div>
+
+                <div class="offcanvas-body">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'lista_evento' %}">
+                                Listar eventos
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container py-4">
+        {% block contenido %}{% endblock %}
+    </main>
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.9/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-WyOxWvTyr1QaMPfiPJSv76iReVthorl5uWlFtZPyK0IE0hGzo9y5Bp9mYanr8Bu"
+        crossorigin="anonymous"
+    ></script>
+</body>
+</html>
