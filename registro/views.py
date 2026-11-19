@@ -18,3 +18,17 @@ def iniciar_sesion(request):
     else:
         form =AuthenticationForm(request)
     return render(request, 'registro/iniciar_sesion.html', {'form': form})
+
+def registrar_usuario(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('iniciar_sesion')
+    else:
+        form = CustomUserCreationForm()
+    return render(request, 'registro/registrar_usuario.html', {'form': form})
+
+def cerrar_sesion(request):
+    logout(request)
+    return redirect('iniciar_sesion')
