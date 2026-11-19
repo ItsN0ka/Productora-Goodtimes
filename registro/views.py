@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+from django.shortcuts import render
+
+# Create your views here.
+=======
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import AuthenticationForm
@@ -32,3 +37,4 @@ def registrar_usuario(request):
 def cerrar_sesion(request):
     logout(request)
     return redirect('iniciar_sesion')
+>>>>>>> origin/develop

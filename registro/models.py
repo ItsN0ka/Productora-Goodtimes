@@ -1,4 +1,8 @@
 from django.db import models
+<<<<<<< HEAD
+
+# Create your models here.
+=======
 from django.contrib.auth.models import User
 
 def rol_usuario_default():
@@ -16,3 +20,4 @@ class Perfil(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     def __str__(self):
         return f"{self.user.username} - {self.rol.nombre}"
+>>>>>>> origin/develop
