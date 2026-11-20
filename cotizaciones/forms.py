@@ -1,9 +1,9 @@
 from django import forms
-from .models import Cotizacion
+from .models import SolicitudCotizacion
 
-class CotizacionForm(forms.ModelForm):
+class SolicitudCotizacionForm(forms.ModelForm):
     class Meta:
-        model = Cotizacion
+        model = SolicitudCotizacion
         #lo que el cliente llena
         fields = ['nombre_evento',
                   'tipo_evento',

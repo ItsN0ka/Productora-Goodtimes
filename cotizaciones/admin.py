@@ -1,4 +1,4 @@
 from django.contrib import admin
-from .models import Cotizacion 
+from .models import SolicitudCotizacion
 
-admin.site.register(Cotizacion)
+admin.site.register(SolicitudCotizacion)
