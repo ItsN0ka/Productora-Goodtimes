@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 def rol_usuario_default():
-    rol, _ =Rol.objects.get_or_create(nombre = 'Usuario')
+    rol, _ =Rol.objects.get_or_create(nombre = 'Cliente')
     return rol.id
 
 class Rol(models.Model):
