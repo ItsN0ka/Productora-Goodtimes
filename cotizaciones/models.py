@@ -11,9 +11,6 @@ class SolicitudCotizacion(models.Model):
     #relacion uno a muchos un cliente puede solicitar muchas solicitudes 
     #PROTECT no permite eliminar el usuario si tiene solicitudes asociadas
     cliente = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='solicitudes', verbose_name='Cliente')
-    #relacion uno a muchos un administrador puede revisar muchas solicitudes
-    #queda vacio hasta que un administrador la revise
-    administrador = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='solicitudes_revisadas', verbose_name='Administrador', null=True, blank=True)
     tipo_evento = models.CharField(max_length=45, verbose_name='Tipo de evento')
     nombre_evento = models.CharField(max_length=45, verbose_name='Nombre del evento')
     cantidad_asistencia = models.PositiveIntegerField(verbose_name='Cantidad de asistentes')
@@ -31,3 +28,28 @@ class SolicitudCotizacion(models.Model):
 
     def __str__(self):
         return f'Solicitud #{self.id} - {self.nombre_evento}'
+
+
+class Cotizacion(models.Model):
+    ESTADOS = [
+        ('ENV', 'Enviada'),
+        ('ACE', 'Aceptada'),
+        ('REC', 'Rechazada'),
+    ]
+    #relacion uno a uno cada solicitud tiene una sola cotizacion
+    #CASCADE si se elimina la solicitud se elimina su cotizacion
+    solicitud = models.OneToOneField(SolicitudCotizacion, on_delete=models.CASCADE, related_name='cotizacion', verbose_name='Solicitud')
+    #relacion uno a muchos un administrador puede preparar muchas cotizaciones
+    administrador = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='cotizaciones', verbose_name='Administrador')
+    descripcion = models.TextField(verbose_name='Descripción de la propuesta')
+    precio = models.PositiveIntegerField(verbose_name='Precio')
+    #por defecto la cotizacion queda enviada al cliente
+    estado = models.CharField(max_length=3, choices=ESTADOS, default='ENV', verbose_name='Estado')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de cotización')
+
+    class Meta:
+        verbose_name = 'Cotización'
+        verbose_name_plural = 'Cotizaciones'
+
+    def __str__(self):
+        return f'Cotización #{self.id} - {self.solicitud.nombre_evento}'
