@@ -1,0 +1,15 @@
+{% extends "eventos/base.html" %}
+{% block contenido %}
+<h1>{{accion}} Cotización</h1>
+<form method="POST">
+  {% csrf_token %}
+  <!-- carga las etiquetas  -->
+    {% load crispy_forms_tags %}
+    <!-- renderizar el formulario enviado desde la vista, 
+     crispy hace todo -->
+    {{ form|crispy }}
+     <button type="submit" class="btn btn-primary">Enviar solicitud</button>
+  <a href="{% url 'mis_cotizaciones' %}" class="btn btn-secondary">Cancelar</a>
+</form>
+
+{% endblock %}
