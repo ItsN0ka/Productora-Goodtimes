@@ -1,0 +1,97 @@
+{% extends "eventos/base.html" %}
+
+{% block titulo %}Preparar cotización{% endblock %}
+
+{% block contenido %}
+<h1 class="h3 mb-4">Preparar cotización</h1>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h2 class="h5">{{ solicitud.nombre_evento }}</h2>
+    <p>Cliente: {{ solicitud.cliente.username }}</p>
+    <p>Tipo: {{ solicitud.tipo_evento }}</p>
+    <p>Fecha: {{ solicitud.fecha|date:"d/m/Y" }} — {{ solicitud.hora|time:"H:i" }}</p>
+    <p>Lugar: {{ solicitud.lugar }}</p>
+    <p>Asistentes: {{ solicitud.cantidad_asistencia }}</p>
+    <p class="mb-0">Comentario: {{ solicitud.comentario|default:"Sin comentario" }}</p>
+  </div>
+</div>
+
+{% if not cotizacion %}
+  <form method="post" class="card card-body">
+    {% csrf_token %}
+    <p>Primero crea un borrador. Luego podrás ir agregando, editando o quitando servicios e implementos, uno por vez.</p>
+    <button type="submit" name="iniciar" class="btn btn-primary">Comenzar preparación</button>
+  </form>
+{% else %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h4 mb-0">Detalles de la propuesta</h2>
+    <span class="badge text-bg-secondary">{{ cotizacion.get_estado_display }}</span>
+  </div>
+
+  <form method="post" class="card card-body mb-4">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" name="guardar_descripcion" class="btn btn-outline-primary">Guardar descripción</button>
+  </form>
+
+  <section class="mb-4">
+    <h2 class="h4">Servicios de la cotización</h2>
+    {% if servicios_cotizados %}
+      <ul class="list-group mb-3">
+        {% for detalle in servicios_cotizados %}
+          <li class="list-group-item">
+            <p class="mb-2">{{ detalle.servicio.nombre }} — Precio acordado: ${{ detalle.precio_acordado|floatformat:2 }}</p>
+            <a href="{% url 'editar_detalle_cotizacion' solicitud.pk 'servicio' detalle.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
+            <a href="{% url 'eliminar_detalle_cotizacion' solicitud.pk 'servicio' detalle.pk %}" class="btn btn-sm btn-outline-danger">Quitar de la cotización</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted">Todavía no agregas servicios.</p>
+    {% endif %}
+
+    <form method="post" action="{% url 'agregar_servicio_cotizacion' solicitud.pk %}" class="card card-body">
+      {% csrf_token %}
+      {{ form_servicio.as_p }}
+      <button type="submit" class="btn btn-primary">Agregar servicio</button>
+    </form>
+  </section>
+
+  <section class="mb-4">
+    <h2 class="h4">Implementos de la cotización</h2>
+    {% if implementos_cotizados %}
+      <ul class="list-group mb-3">
+        {% for detalle in implementos_cotizados %}
+          <li class="list-group-item">
+            <p class="mb-2">{{ detalle.implemento.nombre }} — Cantidad: {{ detalle.cantidad }}</p>
+            <a href="{% url 'editar_detalle_cotizacion' solicitud.pk 'implemento' detalle.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
+            <a href="{% url 'eliminar_detalle_cotizacion' solicitud.pk 'implemento' detalle.pk %}" class="btn btn-sm btn-outline-danger">Quitar de la cotización</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted">Todavía no agregas implementos.</p>
+    {% endif %}
+
+    <form method="post" action="{% url 'agregar_implemento_cotizacion' solicitud.pk %}" class="card card-body">
+      {% csrf_token %}
+      {{ form_implemento.as_p }}
+      <button type="submit" class="btn btn-primary">Agregar implemento</button>
+    </form>
+  </section>
+
+  <div class="alert alert-success d-flex justify-content-between">
+    <strong>Total de servicios</strong>
+    <strong>${{ cotizacion.precio|floatformat:2 }}</strong>
+  </div>
+
+  <div class="d-flex gap-2">
+    <form method="post" action="{% url 'enviar_cotizacion' solicitud.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-success">Enviar cotización al cliente</button>
+    </form>
+    <a href="{% url 'lista_eventos' %}" class="btn btn-secondary">Volver</a>
+  </div>
+{% endif %}
+{% endblock %}
