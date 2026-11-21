@@ -1,0 +1,55 @@
+{% extends 'eventos/base.html' %}
+
+{% block contenido %}
+<div class="container my-4">
+    <h1 class="h4 mb-3">Solicitudes de cotización</h1>
+
+    {% if solicitudes %}
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>Cliente</th>
+                    <th>Evento</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for solicitud in solicitudes %}
+                <tr>
+                    <td>{{ solicitud.id }}</td>
+                    <td>{{ solicitud.cliente.username }}</td>
+                    <td>{{ solicitud.nombre_evento }}</td>
+                    <td>{{ solicitud.fecha|date:"d/m/Y" }} {{ solicitud.hora|time:"H:i" }}</td>
+                    <td>
+                        {% if solicitud.estado == 'ACE' %}
+                            <span class="badge bg-success">Aceptada</span>
+                        {% elif solicitud.estado == 'PEN' %}
+                            <span class="badge bg-warning text-dark">Pendiente</span>
+                        {% elif solicitud.estado == 'INF' %}
+                            <span class="badge bg-info text-dark">Información solicitada</span>
+                        {% elif solicitud.estado == 'REC' %}
+                            <span class="badge bg-danger">Rechazada</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <!-- si ya tiene cotizacion no se puede preparar otra -->
+                        {% if solicitud.cotizacion %}
+                            <span class="text-muted">Ya cotizada (${{ solicitud.cotizacion.precio }})</span>
+                        {% else %}
+                            <a href="{% url 'preparar_cotizacion' solicitud.id %}" class="btn btn-success btn-sm">Preparar cotización</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p class="text-muted">Aún no hay solicitudes de cotización.</p>
+    {% endif %}
+</div>
+{% endblock %}
