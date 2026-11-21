@@ -15,13 +15,24 @@ from .forms import (
 )
 from registro.models import Perfil
 from .decorators import administrador_required
+from cotizaciones.models import SolicitudCotizacion
 
 # Create your views here.
 #Evento
 @administrador_required
 def lista_eventos(request):
     eventos = Evento.objects.order_by("fecha")
-    return render(request, "eventos/evento/evento_list.html", {"eventos": eventos})
+    solicitudes_cotizacion = SolicitudCotizacion.objects.select_related(
+        "cliente"
+    ).order_by("-created_at")
+    return render(
+        request,
+        "eventos/evento/evento_list.html",
+        {
+            "eventos": eventos,
+            "solicitudes_cotizacion": solicitudes_cotizacion,
+        },
+    )
 
 @administrador_required
 def crear_evento(request):
