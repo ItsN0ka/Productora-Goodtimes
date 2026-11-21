@@ -1,0 +1,29 @@
+<section class="mt-4">
+  <h2 class="h4">Servicios del evento</h2>
+
+  {% if servicios_evento %}
+    <ul class="list-group mb-3">
+      {% for detalle in servicios_evento %}
+        <li class="list-group-item">
+          {{ detalle.servicio.nombre }} — Precio acordado: ${{ detalle.precio_acordado }}
+          {% if es_administrador %}
+            <div class="mt-2 d-flex gap-2">
+              <a href="{% url 'editar_servicio_evento' evento.pk detalle.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
+              <a href="{% url 'eliminar_servicio_evento' evento.pk detalle.pk %}" class="btn btn-sm btn-outline-danger">Quitar del evento</a>
+            </div>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-muted">Todavía no hay servicios asociados.</p>
+  {% endif %}
+
+  {% if es_administrador %}
+    <form method="post" action="{% url 'agregar_servicio_evento' evento.pk %}" class="card card-body">
+      {% csrf_token %}
+      {{ form_servicio.as_p }}
+      <button type="submit" class="btn btn-primary">Agregar servicio</button>
+    </form>
+  {% endif %}
+</section>
