@@ -9,50 +9,9 @@
     </span>
   </div>
 
-  <section class="mt-4">
-    <h2 class="h4">Servicios del evento</h2>
-
-    {% if servicios_evento %}
-    <ul class="list-group mb-3">
-      {% for detalle in servicios_evento %}
-      <li class="list-group-item">
-        {{ detalle.servicio.nombre }} — Cantidad: {{ detalle.cantidad }} —
-        Precio acordado: ${{ detalle.precio_acordado }}
-      </li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <p class="text-muted">Todavía no hay servicios asociados.</p>
-    {% endif %}
-
-    <form method="post" action="{% url 'agregar_servicio_evento' evento.pk %}" class="card card-body">
-      {% csrf_token %} {{ form_servicio.as_p }}
-      <button type="submit" class="btn btn-primary">Agregar servicio</button>
-    </form>
-  </section>
-
-  <section class="mt-4">
-    <h2 class="h4">Implementos utilizados</h2>
-
-    {% if implementos_evento %}
-    <ul class="list-group mb-3">
-      {% for uso in implementos_evento %}
-      <li class="list-group-item">
-        {{ uso.implemento.nombre }} — Cantidad: {{ uso.cantidad }} 
-        {% if uso.observaciones %} — {{ uso.observaciones }} 
-        {% endif %}
-      </li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <p class="text-muted">Todavía no hay implementos asociados.</p>
-    {% endif %}
-
-    <form method="post" action="{% url 'agregar_implemento_evento' evento.pk %}" class="card card-body">
-      {% csrf_token %} {{ form_implemento.as_p }}
-      <button type="submit" class="btn btn-primary">Agregar implemento</button>
-    </form>
-  </section>
+  {% include "eventos/servicios/servicios.html" %}
+  {% include "eventos/implementos/implementos.html" %}
+  {% include "eventos/trabajadores/trabajadores.html" %}
 
   <div class="card-body">
     <dl class="row mb-0">
