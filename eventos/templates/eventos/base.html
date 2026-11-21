@@ -68,6 +68,13 @@
                                 </a>
                             </li>
                         {% endif %}
+                        {% if user.is_authenticated and user.perfil.rol.nombre == "Cliente" %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'mis_cotizaciones' %}">
+                                    Mis cotizaciones
+                                </a>
+                            </li>
+                        {% endif %}
                         {% if user.is_authenticated %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'cerrar_sesion' %}">

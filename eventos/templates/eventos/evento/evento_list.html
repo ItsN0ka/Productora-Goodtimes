@@ -10,6 +10,62 @@
     </a>
 </div>
 
+<section class="mb-5">
+    <h2 class="h4 mb-3">Solicitudes de cotización de clientes</h2>
+
+    {% if solicitudes_cotizacion %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Evento solicitado</th>
+                        <th>Fecha del evento</th>
+                        <th>Lugar</th>
+                        <th>Asistentes</th>
+                        <th>Estado</th>
+                        <th>Solicitud recibida</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for solicitud in solicitudes_cotizacion %}
+                        <tr>
+                            <td>{{ solicitud.cliente.username }}</td>
+                            <td>
+                                <strong>{{ solicitud.nombre_evento }}</strong><br>
+                                <small class="text-muted">{{ solicitud.tipo_evento }}</small>
+                            </td>
+                            <td>
+                                {{ solicitud.fecha|date:"d/m/Y" }}<br>
+                                <small class="text-muted">{{ solicitud.hora|time:"H:i" }}</small>
+                            </td>
+                            <td>{{ solicitud.lugar }}</td>
+                            <td>{{ solicitud.cantidad_asistencia }}</td>
+                            <td>
+                                <span class="badge text-bg-secondary">
+                                    {{ solicitud.get_estado_display }}
+                                </span>
+                            </td>
+                            <td>{{ solicitud.created_at|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        {% if solicitud.comentario %}
+                            <tr>
+                                <td colspan="7">
+                                    <strong>Comentario:</strong> {{ solicitud.comentario }}
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            Todavía no hay solicitudes de cotización.
+        </div>
+    {% endif %}
+</section>
+
 {% if eventos %}
     <div class="table-responsive">
         <table class="table table-striped table-hover align-middle">
