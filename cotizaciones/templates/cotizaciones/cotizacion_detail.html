@@ -70,16 +70,26 @@
 
             <p>
               Total de los servicios:
+              
               <strong>${{ respuesta.precio|floatformat:2 }}</strong>
             </p>
 
             {% if respuesta.estado == 'ENV' and not obj.evento_id %}
-              <form method="post" action="{% url 'aceptar_cotizacion' obj.pk %}" class="mt-3">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-success">Aceptar cotización</button>
-              </form>
+              <div class="d-flex gap-2 mt-3">
+                <form method="post" action="{% url 'aceptar_cotizacion' obj.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-success">Aceptar cotización</button>
+                </form>
+                <!-- el cliente puede rechazar la propuesta -->
+                <form method="post" action="{% url 'rechazar_cotizacion' obj.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-danger">Rechazar cotización</button>
+                </form>
+              </div>
             {% elif respuesta.estado == 'ACE' %}
               <div class="alert alert-success mt-3 mb-0">Aceptaste esta cotización y el evento fue registrado.</div>
+            {% elif respuesta.estado == 'REC' %}
+              <div class="alert alert-danger mt-3 mb-0">Rechazaste esta cotización.</div>
             {% endif %}
           {% else %}
             <p class="text-muted">

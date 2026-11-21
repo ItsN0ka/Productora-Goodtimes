@@ -45,7 +45,7 @@ def mis_cotizaciones(request):
 @login_required(login_url="iniciar_sesion")
 def detalle_cotizacion(request, pk):
     solicitud = get_object_or_404(SolicitudCotizacion, pk=pk, cliente=request.user)
-    respuesta = Cotizacion.objects.filter(solicitud=solicitud, estado__in=['ENV', 'ACE']).select_related(
+    respuesta = Cotizacion.objects.filter(solicitud=solicitud, estado__in=['ENV', 'ACE', 'REC']).select_related(
         "administrador"
     ).prefetch_related("detalles_servicios__servicio", "detalles_implementos__implemento").first()
     return render(
@@ -271,7 +271,7 @@ def aceptar_cotizacion(request, pk):
 
     try:
         with transaction.atomic():
-            # Bloquea el stock mientras se valida y crea el evento para evitar
+            # Bloquea el stock mientras se valida y crea el evento para evitar 
             # aceptar dos propuestas simultáneamente usando las mismas unidades.
             lineas_implementos = list(cotizacion.detalles_implementos.all())
             list(Implemento.objects.select_for_update().filter(
@@ -320,9 +320,29 @@ def aceptar_cotizacion(request, pk):
     return redirect('detalle_cotizacion', pk=pk)
 
 
-#PANEL DEL ADMINISTRADOR
+@login_required
+def rechazar_cotizacion(request, pk):
+    #buscar la solicitud solo dentro de las del cliente que inicio sesion
+    solicitud = get_object_or_404(SolicitudCotizacion, pk=pk, cliente=request.user)
+    cotizacion = get_object_or_404(Cotizacion, solicitud=solicitud)
+    if request.method == 'POST':
+        #solo se puede rechazar una cotizacion enviada
+        if cotizacion.estado == 'ENV':
+            #se cambia el estado de la cotizacion y de la solicitud
+            cotizacion.estado = 'REC'
+            cotizacion.save()
+            solicitud.estado = 'REC'
+            solicitud.save()
+            messages.success(request, 'Cotización rechazada correctamente.')
+        else:
+            #no se puede rechazar porque ya fue aceptada o rechazada
+            messages.error(request, 'Esta cotización ya no se puede rechazar.')
+    #vuelve al detalle de la cotizacion
+    return redirect('detalle_cotizacion', pk=pk)
+
+#admin
 @administrador_required
 def lista_solicitudes(request):
-    #el administrador ve todas las solicitudes de todos los clientes
+    #admin ve todas las solicitudes
     solicitudes = SolicitudCotizacion.objects.all().order_by('-created_at')
     return render(request, 'cotizaciones/solicitudes_list.html', {'solicitudes': solicitudes})
