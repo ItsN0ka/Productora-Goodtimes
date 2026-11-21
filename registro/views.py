@@ -23,6 +23,8 @@ def iniciar_sesion(request):
             login(request, user)
             if perfil.rol.nombre == 'Administrador':
                 return redirect('lista_eventos')
+            if perfil.rol.nombre == 'Cliente':
+                return redirect('mis_cotizaciones')
             return redirect('acceso_restringido')
     else:
         form =AuthenticationForm(request)
