@@ -1,4 +1,5 @@
 {% extends "eventos/base.html" %}
+{% load crispy_forms_tags %}
 
 {% block titulo %}Preparar cotización{% endblock %}
 
@@ -31,7 +32,7 @@
 
   <form method="post" class="card card-body mb-4">
     {% csrf_token %}
-    {{ form.as_p }}
+    {{ form|crispy }}
     <button type="submit" name="guardar_descripcion" class="btn btn-outline-primary">Guardar descripción</button>
   </form>
 
@@ -53,7 +54,7 @@
 
     <form method="post" action="{% url 'agregar_servicio_cotizacion' solicitud.pk %}" class="card card-body">
       {% csrf_token %}
-      {{ form_servicio.as_p }}
+      {{ form_servicio|crispy }}
       <button type="submit" class="btn btn-primary">Agregar servicio</button>
     </form>
   </section>
@@ -76,7 +77,7 @@
 
     <form method="post" action="{% url 'agregar_implemento_cotizacion' solicitud.pk %}" class="card card-body">
       {% csrf_token %}
-      {{ form_implemento.as_p }}
+      {{ form_implemento|crispy }}
       <button type="submit" class="btn btn-primary">Agregar implemento</button>
     </form>
   </section>
