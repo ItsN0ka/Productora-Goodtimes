@@ -25,6 +25,7 @@
                         <th>Asistentes</th>
                         <th>Estado</th>
                         <th>Solicitud recibida</th>
+                        <th>Acción</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -47,10 +48,30 @@
                                 </span>
                             </td>
                             <td>{{ solicitud.created_at|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {% if solicitud.cotizacion.estado == 'BOR' %}
+                                    <a href="{% url 'responder_solicitud' solicitud.pk %}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Continuar cotización
+                                    </a>
+                                {% elif solicitud.cotizacion %}
+                                    <span class="badge text-bg-success">
+                                        {{ solicitud.cotizacion.get_estado_display }}
+                                    </span>
+                                {% else %}
+                                    <a href="{% url 'responder_solicitud' solicitud.pk %}"
+                                    class="btn btn-sm btn-primary">
+                                        Preparar cotización
+                                    </a> 
+                                    {% comment %} <button type="button" class="btn- btn-sm btn-secondary">
+                                        Preparar cotización
+                                    </button> {% endcomment %}
+                                {% endif %}
+                            </td>
                         </tr>
                         {% if solicitud.comentario %}
                             <tr>
-                                <td colspan="7">
+                                <td colspan="8">
                                     <strong>Comentario:</strong> {{ solicitud.comentario }}
                                 </td>
                             </tr>
