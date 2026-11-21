@@ -23,6 +23,8 @@ class Evento(models.Model):
         choices=Estado.choices,
         default=Estado.PENDIENTE,
     )
+    cantidad_asistencia = models.PositiveIntegerField(null=True, blank=True, validators=[MinValueValidator(1)],
+                                                      verbose_name="Cantidad de asistentes")
 
     def __str__(self):
         return f"{self.nombre} - {self.fecha}"
