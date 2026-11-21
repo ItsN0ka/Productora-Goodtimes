@@ -36,11 +36,12 @@
                         {% endif %}
                     </td>
                     <td>
-                        <!-- si ya tiene cotizacion no se puede preparar otra -->
+                        <!-- el administrador prepara o continua la cotizacion -->
                         {% if solicitud.cotizacion %}
-                            <span class="text-muted">Ya cotizada (${{ solicitud.cotizacion.precio }})</span>
+                            <span class="text-muted">{{ solicitud.cotizacion.get_estado_display }}</span>
+                            <a href="{% url 'responder_solicitud' solicitud.id %}" class="btn btn-outline-primary btn-sm">Ver</a>
                         {% else %}
-                            <a href="{% url 'preparar_cotizacion' solicitud.id %}" class="btn btn-success btn-sm">Preparar cotización</a>
+                            <a href="{% url 'responder_solicitud' solicitud.id %}" class="btn btn-success btn-sm">Preparar cotización</a>
                         {% endif %}
                     </td>
                 </tr>

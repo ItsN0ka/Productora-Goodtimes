@@ -1,10 +1,22 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import Http404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from .models import SolicitudCotizacion, Cotizacion
-from .forms import SolicitudCotizacionForm, CotizacionForm
+from django.db import transaction
+from django.core.exceptions import ValidationError
+from decimal import Decimal
 from eventos.decorators import administrador_required
+from eventos.models import Evento, DetalleEvento, UsoImplemento, Implemento
+from .models import SolicitudCotizacion, Cotizacion
+from .forms import (
+    SolicitudCotizacionForm,
+    CotizacionForm,
+    DetalleServicioCotizacionForm,
+    DetalleImplementoCotizacionForm,
+)
+from .models import DetalleServicioCotizacion, DetalleImplementoCotizacion
+
 ##cotiaciones del cliente
 @login_required
 def crear_cotizacion(request):
@@ -30,40 +42,287 @@ def mis_cotizaciones(request):
     cotizaciones = SolicitudCotizacion.objects.filter(cliente=request.user).order_by('-created_at')
     return render(request, 'cotizaciones/mis_cotizaciones.html', {'cotizaciones': cotizaciones})
 
-@login_required
+@login_required(login_url="iniciar_sesion")
 def detalle_cotizacion(request, pk):
-    #buscar la cotizacion solo dentro de las del cliente, si no existe muestra error 404
-    cotizacion = get_object_or_404(SolicitudCotizacion, pk=pk, cliente=request.user)
-    return render(request, 'cotizaciones/cotizacion_detail.html', {'obj': cotizacion})
+    solicitud = get_object_or_404(SolicitudCotizacion, pk=pk, cliente=request.user)
+    respuesta = Cotizacion.objects.filter(solicitud=solicitud, estado__in=['ENV', 'ACE']).select_related(
+        "administrador"
+    ).prefetch_related("detalles_servicios__servicio", "detalles_implementos__implemento").first()
+    return render(
+        request,
+        'cotizaciones/cotizacion_detail.html',
+        {'obj': solicitud, 'respuesta': respuesta},
+    )
+
+@administrador_required
+def responder_solicitud(request, pk):
+    solicitud = get_object_or_404(SolicitudCotizacion, pk=pk)
+    cotizacion = Cotizacion.objects.filter(solicitud=solicitud).first()
+    if solicitud.evento_id or (cotizacion and cotizacion.estado == 'ACE'):
+        messages.info(request, 'Esta solicitud ya fue aceptada y convertida en evento.')
+        return redirect('lista_eventos')
+
+    if request.method == 'POST' and 'iniciar' in request.POST and cotizacion is None:
+        cotizacion = Cotizacion.objects.create(
+            solicitud=solicitud,
+            administrador=request.user,
+            descripcion='',
+            precio=Decimal('0.00'),
+            estado='BOR',
+        )
+        messages.success(request, 'Borrador de cotización creado. Ahora puedes agregar sus detalles.')
+        return redirect('responder_solicitud', pk=solicitud.pk)
+
+    if cotizacion is not None and request.method == 'POST' and 'guardar_descripcion' in request.POST:
+        form = CotizacionForm(request.POST, instance=cotizacion)
+        if form.is_valid():
+            respuesta = form.save(commit=False)
+            respuesta.estado = 'BOR'
+            respuesta.save()
+            messages.success(request, 'Descripción guardada en el borrador.')
+            return redirect('responder_solicitud', pk=solicitud.pk)
+    elif cotizacion is not None:
+        form = CotizacionForm(instance=cotizacion)
+    else:
+        form = None
+
+    return render(
+        request,
+        'cotizaciones/responder_solicitud.html',
+        {
+            'form': form,
+            'cotizacion': cotizacion,
+            'solicitud': solicitud,
+            'servicios_cotizados': (
+                cotizacion.detalles_servicios.select_related('servicio').all()
+                if cotizacion else []
+            ),
+            'implementos_cotizados': (
+                cotizacion.detalles_implementos.select_related('implemento').all()
+                if cotizacion else []
+            ),
+            'form_servicio': DetalleServicioCotizacionForm(),
+            'form_implemento': DetalleImplementoCotizacionForm(
+                fecha_evento=solicitud.fecha,
+            ),
+        },
+    )
+
+
+def _guardar_total_cotizacion(cotizacion):
+    cotizacion.precio = cotizacion.calcular_total()
+    cotizacion.estado = 'BOR'
+    cotizacion.save(update_fields=['precio', 'estado'])
+
+
+@administrador_required
+def agregar_servicio_cotizacion(request, pk):
+    cotizacion = get_object_or_404(Cotizacion, solicitud_id=pk)
+    if request.method == 'POST' and not cotizacion.solicitud.evento_id:
+        form = DetalleServicioCotizacionForm(request.POST)
+        if form.is_valid():
+            servicio = form.cleaned_data['servicio']
+            if cotizacion.detalles_servicios.filter(servicio=servicio).exists():
+                messages.error(request, 'Este servicio ya está agregado a la cotización.')
+            else:
+                linea = form.save(commit=False)
+                linea.cotizacion = cotizacion
+                linea.save()
+                _guardar_total_cotizacion(cotizacion)
+                messages.success(request, 'Servicio agregado a la cotización.')
+                return redirect('responder_solicitud', pk=pk)
+        else:
+            messages.error(request, 'Revisa los datos del servicio y su precio.')
+    return redirect('responder_solicitud', pk=pk)
+
+
+@administrador_required
+def agregar_implemento_cotizacion(request, pk):
+    cotizacion = get_object_or_404(Cotizacion, solicitud_id=pk)
+    if request.method == 'POST' and not cotizacion.solicitud.evento_id:
+        form = DetalleImplementoCotizacionForm(
+            request.POST,
+            fecha_evento=cotizacion.solicitud.fecha,
+        )
+        if form.is_valid():
+            implemento = form.cleaned_data['implemento']
+            if cotizacion.detalles_implementos.filter(implemento=implemento).exists():
+                messages.error(request, 'Este implemento ya está agregado a la cotización.')
+            else:
+                linea = form.save(commit=False)
+                linea.cotizacion = cotizacion
+                linea.save()
+                _guardar_total_cotizacion(cotizacion)
+                messages.success(request, 'Implemento agregado a la cotización.')
+                return redirect('responder_solicitud', pk=pk)
+        else:
+            for errores in form.errors.values():
+                for error in errores:
+                    messages.error(request, error)
+    return redirect('responder_solicitud', pk=pk)
+
+
+@administrador_required
+def editar_detalle_cotizacion(request, pk, tipo, detalle_pk):
+    cotizacion = get_object_or_404(Cotizacion, solicitud_id=pk)
+    if tipo == 'servicio':
+        modelo, clase_form = DetalleServicioCotizacion, DetalleServicioCotizacionForm
+    else:
+        modelo, clase_form = DetalleImplementoCotizacion, DetalleImplementoCotizacionForm
+    detalle = get_object_or_404(modelo, pk=detalle_pk, cotizacion=cotizacion)
+
+    kwargs_form = {}
+    if tipo == 'implemento':
+        kwargs_form['fecha_evento'] = cotizacion.solicitud.fecha
+
+    if request.method == 'POST' and not cotizacion.solicitud.evento_id:
+        form = clase_form(request.POST, instance=detalle, **kwargs_form)
+        if form.is_valid():
+            campo = 'servicio' if tipo == 'servicio' else 'implemento'
+            seleccionado = form.cleaned_data[campo]
+            repetido = modelo.objects.filter(
+                cotizacion=cotizacion, **{campo: seleccionado}
+            ).exclude(pk=detalle.pk).exists()
+            if repetido:
+                form.add_error(campo, f'Este {campo} ya está agregado a la cotización.')
+            else:
+                form.save()
+                _guardar_total_cotizacion(cotizacion)
+                messages.success(request, 'Detalle de la cotización actualizado.')
+                return redirect('responder_solicitud', pk=pk)
+    else:
+        form = clase_form(instance=detalle, **kwargs_form)
+
+    return render(request, 'cotizaciones/detalle_form.html', {
+        'form': form,
+        'solicitud': cotizacion.solicitud,
+        'tipo': tipo,
+    })
+
+
+@administrador_required
+def eliminar_detalle_cotizacion(request, pk, tipo, detalle_pk):
+    cotizacion = get_object_or_404(Cotizacion, solicitud_id=pk)
+    if tipo not in ('servicio', 'implemento'):
+        raise Http404
+    modelo = DetalleServicioCotizacion if tipo == 'servicio' else DetalleImplementoCotizacion
+    detalle = get_object_or_404(modelo, pk=detalle_pk, cotizacion=cotizacion)
+    if cotizacion.solicitud.evento_id:
+        messages.error(request, 'No se pueden modificar los detalles de una cotización aceptada.')
+        return redirect('responder_solicitud', pk=pk)
+
+    nombre_detalle = (
+        detalle.servicio.nombre if tipo == 'servicio' else detalle.implemento.nombre
+    )
+    if request.method == 'POST':
+        detalle.delete()
+        _guardar_total_cotizacion(cotizacion)
+        messages.success(request, 'Detalle eliminado de la cotización.')
+        return redirect('responder_solicitud', pk=pk)
+
+    return render(request, 'cotizaciones/detalle_delete.html', {
+        'cotizacion': cotizacion,
+        'solicitud': cotizacion.solicitud,
+        'tipo': tipo,
+        'nombre_detalle': nombre_detalle,
+    })
+
+
+@administrador_required
+def enviar_cotizacion(request, pk):
+    cotizacion = get_object_or_404(Cotizacion, solicitud_id=pk)
+    if request.method != 'POST' or cotizacion.solicitud.evento_id:
+        return redirect('responder_solicitud', pk=pk)
+    cotizacion.precio = cotizacion.calcular_total()
+    if not cotizacion.detalles_servicios.exists() or cotizacion.precio <= 0:
+        messages.error(request, 'Agrega al menos un servicio con precio mayor a cero antes de enviar la cotización.')
+        return redirect('responder_solicitud', pk=pk)
+    cotizacion.estado = 'ENV'
+    cotizacion.save(update_fields=['precio', 'estado'])
+    messages.success(request, 'Cotización enviada al cliente.')
+    return redirect('lista_eventos')
+
+
+@login_required(login_url='iniciar_sesion')
+@transaction.atomic
+def aceptar_cotizacion(request, pk):
+    if request.method != 'POST':
+        return redirect('detalle_cotizacion', pk=pk)
+
+    solicitud = get_object_or_404(
+        SolicitudCotizacion.objects.select_for_update(), pk=pk, cliente=request.user
+    )
+    cotizacion = get_object_or_404(
+        Cotizacion.objects.select_for_update().prefetch_related(
+            'detalles_servicios__servicio', 'detalles_implementos__implemento'
+        ),
+        solicitud=solicitud,
+    )
+
+    if solicitud.evento_id:
+        messages.info(request, 'Esta cotización ya fue convertida en evento.')
+        return redirect('detalle_cotizacion', pk=pk)
+    if cotizacion.estado != 'ENV':
+        messages.info(request, 'Esta cotización ya no está disponible para aceptar.')
+        return redirect('detalle_cotizacion', pk=pk)
+    if not cotizacion.detalles_servicios.exists() and not cotizacion.detalles_implementos.exists():
+        messages.error(request, 'La cotización no tiene servicios ni implementos detallados. Contacta al administrador para que la actualice.')
+        return redirect('detalle_cotizacion', pk=pk)
+
+    try:
+        with transaction.atomic():
+            # Bloquea el stock mientras se valida y crea el evento para evitar
+            # aceptar dos propuestas simultáneamente usando las mismas unidades.
+            lineas_implementos = list(cotizacion.detalles_implementos.all())
+            list(Implemento.objects.select_for_update().filter(
+                pk__in=[linea.implemento_id for linea in lineas_implementos]
+            ).order_by('pk'))
+
+            evento = Evento(
+                nombre=solicitud.nombre_evento,
+                tipo=solicitud.tipo_evento,
+                fecha=solicitud.fecha,
+                hora=solicitud.hora,
+                lugar=solicitud.lugar,
+                descripcion=cotizacion.descripcion,
+                estado=Evento.Estado.CONFIRMADO,
+                cantidad_asistencia=solicitud.cantidad_asistencia,
+            )
+            evento.full_clean()
+            evento.save()
+
+            for linea in cotizacion.detalles_servicios.all():
+                DetalleEvento.objects.create(
+                    evento=evento,
+                    servicio=linea.servicio,
+                    precio_acordado=linea.precio_acordado,
+                )
+
+            for linea in lineas_implementos:
+                uso = UsoImplemento(
+                    evento=evento,
+                    implemento=linea.implemento,
+                    cantidad=linea.cantidad,
+                )
+                uso.full_clean()
+                uso.save()
+
+            solicitud.evento = evento
+            solicitud.estado = 'ACE'
+            solicitud.save(update_fields=['evento', 'estado'])
+            cotizacion.estado = 'ACE'
+            cotizacion.save(update_fields=['estado'])
+    except ValidationError as error:
+        messages.error(request, f'No se pudo aceptar la cotización: {error}')
+        return redirect('detalle_cotizacion', pk=pk)
+
+    messages.success(request, 'Cotización aceptada. El evento ya aparece en la vista del administrador.')
+    return redirect('detalle_cotizacion', pk=pk)
 
 
 #PANEL DEL ADMINISTRADOR
-#solo usuarios con rol administrador
 @administrador_required
 def lista_solicitudes(request):
     #el administrador ve todas las solicitudes de todos los clientes
     solicitudes = SolicitudCotizacion.objects.all().order_by('-created_at')
     return render(request, 'cotizaciones/solicitudes_list.html', {'solicitudes': solicitudes})
-
-@administrador_required
-def preparar_cotizacion(request, pk):
-    solicitud = get_object_or_404(SolicitudCotizacion, pk=pk)
-    #cada solicitud tiene una sola cotizacion
-    if hasattr(solicitud, 'cotizacion'):
-        messages.warning(request, 'Esta solicitud ya tiene una cotización.')
-        return redirect('lista_solicitudes')
-    form = CotizacionForm(request.POST or None)
-    if request.method == 'POST':
-        if form.is_valid():
-            #se asigna la solicitud y el administrador que inicio sesion
-            cotizacion = form.save(commit=False)
-            cotizacion.solicitud = solicitud
-            cotizacion.administrador = request.user
-            cotizacion.save()
-            #la solicitud queda aceptada porque ya tiene su cotizacion
-            solicitud.estado = 'ACE'
-            solicitud.save()
-            messages.success(request, 'Cotización enviada al cliente.')
-            return redirect('lista_solicitudes')
-    #sino se renderiza al formulario de la cotizacion
-    return render(request, 'cotizaciones/cotizacion_admin_form.html', {'form': form, 'obj': solicitud})
