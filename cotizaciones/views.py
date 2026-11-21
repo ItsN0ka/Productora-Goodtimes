@@ -40,13 +40,13 @@ def crear_cotizacion(request):
                 messages.success(request, 'Cotización enviada correctamente.')
                 return redirect('mis_cotizaciones')
     #sino se renderiza al formulario de la cotizacion
-    return render(request, 'cotizaciones/cotizacion_form.html', {'form': form, 'accion': 'Solicitar'})
+    return render(request, 'cotizaciones/cliente/cotizacion_form.html', {'form': form, 'accion': 'Solicitar'})
 
 @login_required
 def mis_cotizaciones(request):
     #el cliente solo ve sus propias cotizaciones
     cotizaciones = SolicitudCotizacion.objects.filter(cliente=request.user).order_by('-created_at')
-    return render(request, 'cotizaciones/mis_cotizaciones.html', {'cotizaciones': cotizaciones})
+    return render(request, 'cotizaciones/cliente/mis_cotizaciones.html', {'cotizaciones': cotizaciones})
 
 @login_required(login_url="iniciar_sesion")
 def detalle_cotizacion(request, pk):
@@ -56,7 +56,7 @@ def detalle_cotizacion(request, pk):
     ).prefetch_related("detalles_servicios__servicio", "detalles_implementos__implemento").first()
     return render(
         request,
-        'cotizaciones/cotizacion_detail.html',
+        'cotizaciones/cliente/cotizacion_detail.html',
         {'obj': solicitud, 'respuesta': respuesta},
     )
 
@@ -164,7 +164,7 @@ def rechazar_cotizacion(request, pk):
 def lista_solicitudes(request):
     #admin ve todas las solicitudes
     solicitudes = SolicitudCotizacion.objects.all().order_by('-created_at')
-    return render(request, 'cotizaciones/solicitudes_list.html', {'solicitudes': solicitudes})
+    return render(request, 'cotizaciones/administrador/solicitudes_list.html', {'solicitudes': solicitudes})
 
 
 @administrador_required
@@ -201,7 +201,7 @@ def responder_solicitud(request, pk):
 
     return render(
         request,
-        'cotizaciones/responder_solicitud.html',
+        'cotizaciones/administrador/responder_solicitud.html',
         {
             'form': form,
             'cotizacion': cotizacion,
@@ -300,7 +300,7 @@ def editar_detalle_cotizacion(request, pk, tipo, detalle_pk):
     else:
         form = clase_form(instance=detalle, **kwargs_form)
 
-    return render(request, 'cotizaciones/detalle_form.html', {
+    return render(request, 'cotizaciones/administrador/detalle_form.html', {
         'form': form,
         'solicitud': cotizacion.solicitud,
         'tipo': tipo,
@@ -327,7 +327,7 @@ def eliminar_detalle_cotizacion(request, pk, tipo, detalle_pk):
         messages.success(request, 'Detalle eliminado de la cotización.')
         return redirect('responder_solicitud', pk=pk)
 
-    return render(request, 'cotizaciones/detalle_delete.html', {
+    return render(request, 'cotizaciones/administrador/detalle_delete.html', {
         'cotizacion': cotizacion,
         'solicitud': cotizacion.solicitud,
         'tipo': tipo,
