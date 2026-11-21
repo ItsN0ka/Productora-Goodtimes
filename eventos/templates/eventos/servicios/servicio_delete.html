@@ -1,0 +1,28 @@
+{% extends "eventos/base.html" %}
+
+{% block titulo %}Quitar servicio{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h1 class="h3">Quitar servicio del evento</h1>
+        <p>
+          ¿Quieres quitar <strong>{{ detalle.servicio.nombre }}</strong>
+          del evento <strong>{{ evento.nombre }}</strong>?
+        </p>
+        <p>El servicio seguirá disponible en el catálogo para otros eventos.</p>
+
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Sí, quitarlo</button>
+          <a href="{% url 'detalle_eventos' evento.pk %}" class="btn btn-outline-secondary">
+            Cancelar
+          </a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

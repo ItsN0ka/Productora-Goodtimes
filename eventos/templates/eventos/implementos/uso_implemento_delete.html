@@ -1,0 +1,29 @@
+{% extends "eventos/base.html" %}
+
+{% block titulo %}Quitar implemento{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h1 class="h3">Quitar implemento del evento</h1>
+        <p>
+          ¿Quieres quitar <strong>{{ uso.implemento.nombre }}</strong>
+          (cantidad: {{ uso.cantidad }}) del evento
+          <strong>{{ evento.nombre }}</strong>?
+        </p>
+        <p>Al quitarlo, esa cantidad volverá a estar disponible para esa fecha.</p>
+
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Sí, quitarlo</button>
+          <a href="{% url 'detalle_eventos' evento.pk %}" class="btn btn-outline-secondary">
+            Cancelar
+          </a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
