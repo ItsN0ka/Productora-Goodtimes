@@ -20,8 +20,14 @@
       <dd class="col-sm-9">{{ evento.hora|default:"Sin hora definida" }}</dd>
       <dt class="col-sm-3">Lugar</dt>
       <dd class="col-sm-9">{{ evento.lugar }}</dd>
+      <dt class="col-sm-3">Asistentes</dt>
+      <dd class="col-sm-9">{{ evento.cantidad_asistencia|default:"Sin dato" }}</dd>
       <dt class="col-sm-3">Descripción</dt>
       <dd class="col-sm-9">{{ evento.descripcion|default:"Sin descripción" }}</dd>
+      {% if solicitud_origen %}
+        <dt class="col-sm-3">Cliente</dt>
+        <dd class="col-sm-9">{{ solicitud_origen.cliente.username }}</dd>
+      {% endif %}
     </dl>
 
     <h2 class="h5 mt-4">Servicios</h2>
@@ -43,7 +49,7 @@
       <strong>${{ precio_total|floatformat:2 }}</strong>
     </div>
     <p class="form-text">
-      La suma total de los precios acordados de los servicios.
+      Suma de los precios acordados de los servicios. Los implementos se registran por cantidad.
     </p>
 
     <h2 class="h5 mt-4">Implementos</h2>

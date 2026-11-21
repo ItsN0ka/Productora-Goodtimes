@@ -23,7 +23,8 @@ from cotizaciones.models import SolicitudCotizacion
 def lista_eventos(request):
     eventos = Evento.objects.order_by("fecha")
     solicitudes_cotizacion = SolicitudCotizacion.objects.select_related(
-        "cliente"
+        "cliente",
+        "cotizacion",
     ).order_by("-created_at")
     return render(
         request,
@@ -70,9 +71,15 @@ def resumen_evento(request, pk):
     evento = get_object_or_404(Evento, pk=pk)
     servicios = evento.servicios.select_related("servicio")
     total = servicios.aggregate(total=Sum("precio_acordado"))["total"] or 0
+    solicitud_origen = SolicitudCotizacion.objects.filter(evento=evento).select_related(
+        "cotizacion"
+    ).first()
+    if solicitud_origen and hasattr(solicitud_origen, "cotizacion"):
+        total = solicitud_origen.cotizacion.precio
 
     contexto = {
         "evento": evento,
+        "solicitud_origen": solicitud_origen,
         "servicios_evento": servicios,
         "implementos_evento": evento.implementos_usados.select_related("implemento"),
         "participaciones_trabajador": evento.participaciones.select_related(
