@@ -109,6 +109,10 @@ def aceptar_cotizacion(request, pk):
     if not cotizacion.detalles_servicios.exists() and not cotizacion.detalles_implementos.exists():
         messages.error(request, 'La cotización no tiene servicios ni implementos detallados. Contacta al administrador para que la actualice.')
         return redirect('detalle_cotizacion', pk=pk)
+    #que la fecha y hora no hayan sido ocupadas por otro evento aceptado
+    if not _fecha_disponible(solicitud.fecha, solicitud.hora, solicitud.magnitud, excluir_pk=solicitud.pk):
+        messages.error(request, 'Esa fecha y hora ya fue ocupada por otro evento.')
+        return redirect('detalle_cotizacion', pk=pk)
 
     try:
         with transaction.atomic():
