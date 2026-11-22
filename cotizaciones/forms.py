@@ -21,6 +21,7 @@ class SolicitudCotizacionForm(forms.ModelForm):
                   'tipo_evento',
                   'fecha',
                   'hora',
+                  'magnitud',
                   'lugar',
                   'cantidad_asistencia',
                   'comentario']

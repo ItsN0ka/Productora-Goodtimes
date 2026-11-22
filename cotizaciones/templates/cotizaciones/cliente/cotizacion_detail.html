@@ -25,6 +25,7 @@
     <hr>
     <p class="mb-1"><strong>Fecha:</strong> {{ obj.fecha|date:"d/m/Y" }}</p>
     <p class="mb-1"><strong>Hora:</strong> {{ obj.hora|time:"H:i" }}</p>
+    <p class="mb-1"><strong>Magnitud:</strong> {{ obj.get_magnitud_display }}</p>
     <p class="mb-1"><strong>Lugar:</strong> {{ obj.lugar }}</p>
     <p class="mb-3"><strong>Cantidad de asistentes:</strong> {{ obj.cantidad_asistencia }}</p>
 
