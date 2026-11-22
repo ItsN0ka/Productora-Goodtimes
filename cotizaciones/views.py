@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from decimal import Decimal
+from datetime import datetime, timedelta
 from eventos.decorators import administrador_required
 from eventos.models import Evento, DetalleEvento, UsoImplemento, Implemento
 from .models import SolicitudCotizacion, Cotizacion, DetalleServicioCotizacion, DetalleImplementoCotizacion
@@ -16,11 +17,30 @@ from .forms import (
     DetalleImplementoCotizacionForm,
 )
 
-#funcion auxiliar: recalcula el total de la cotizacion y la deja en borrador
+#recalcula el total de la cotizacion y la deja en borrador
 def _guardar_total_cotizacion(cotizacion):
     cotizacion.precio = cotizacion.calcular_total()
     cotizacion.estado = 'BOR'
     cotizacion.save(update_fields=['precio', 'estado'])
+
+#funcion auxiliar: revisa si la fecha y hora estan libres segun la magnitud
+def _fecha_disponible(fecha, hora, magnitud, excluir_pk=None):
+    #solo bloquean las solicitudes ya aceptadas de ese mismo dia
+    ocupadas = SolicitudCotizacion.objects.filter(fecha=fecha, estado='ACE').exclude(pk=excluir_pk)
+    if not ocupadas.exists():
+        return True
+    #un evento grande ocupa el dia completo
+    if magnitud == 'GRA' or ocupadas.filter(magnitud='GRA').exists():
+        return False
+    #los pequeños y medianos ocupan algunas horas, se revisa que no se crucen
+    inicio = datetime.combine(fecha, hora)
+    fin = inicio + timedelta(hours=SolicitudCotizacion.HORAS_BLOQUEO[magnitud])
+    for otra in ocupadas:
+        otra_inicio = datetime.combine(otra.fecha, otra.hora)
+        otra_fin = otra_inicio + timedelta(hours=SolicitudCotizacion.HORAS_BLOQUEO[otra.magnitud])
+        if inicio < otra_fin and otra_inicio < fin:
+            return False
+    return True
 
 
 #COTIZACIONES DEL CLIENTE
@@ -32,6 +52,9 @@ def crear_cotizacion(request):
             ## que no se pueda poner una fecha pasada a la de hoy
             if form.cleaned_data['fecha'] < timezone.localdate():
                 messages.error(request, 'La fecha del evento no puede ser anterior a hoy')
+            #que la fecha y hora no choquen con un evento ya aceptado
+            elif not _fecha_disponible(form.cleaned_data['fecha'], form.cleaned_data['hora'], form.cleaned_data['magnitud']):
+                messages.error(request, 'Esa fecha y hora no está disponible para un evento de esa magnitud.')
             else:
                 #se guarda sin enviar a la bd 
                 cotizacion = form.save(commit=False)

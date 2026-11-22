@@ -15,6 +15,8 @@ class SolicitudCotizacion(models.Model):
         ('MED', 'Mediano'),
         ('GRA', 'Grande'),
     ]
+    #tiempo que quedara bloqueado dependiendo la magnitud, si es pequeño o mediano
+    HORAS_BLOQUEO = {'PEQ': 4, 'MED': 8}
     #relacion uno a muchos un cliente puede solicitar muchas solicitudes 
     #PROTECT no permite eliminar el usuario si tiene solicitudes asociadas
     cliente = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='solicitudes', verbose_name='Cliente')
