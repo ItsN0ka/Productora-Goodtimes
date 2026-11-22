@@ -1,0 +1,30 @@
+<section class="mt-4">
+  <h2 class="h4">Implementos utilizados</h2>
+
+  {% if implementos_evento %}
+    <ul class="list-group mb-3">
+      {% for uso in implementos_evento %}
+        <li class="list-group-item">
+          {{ uso.implemento.nombre }} — Cantidad: {{ uso.cantidad }}
+          {% if uso.observaciones %} — {{ uso.observaciones }}{% endif %}
+          {% if es_administrador %}
+            <div class="mt-2 d-flex gap-2">
+              <a href="{% url 'editar_uso_implemento' evento.pk uso.pk %}" class="btn btn-sm btn-outline-primary">Editar cantidad</a>
+              <a href="{% url 'eliminar_uso_implemento' evento.pk uso.pk %}" class="btn btn-sm btn-outline-danger">Quitar del evento</a>
+            </div>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-muted">Todavía no hay implementos asociados.</p>
+  {% endif %}
+
+  {% if es_administrador %}
+    <form method="post" action="{% url 'agregar_implemento_evento' evento.pk %}" class="card card-body">
+      {% csrf_token %}
+      {{ form_implemento.as_p }}
+      <button type="submit" class="btn btn-primary">Agregar implemento</button>
+    </form>
+  {% endif %}
+</section>

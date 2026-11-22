@@ -1,0 +1,30 @@
+{% extends "eventos/base.html" %}
+
+{% block titulo %}Quitar detalle de la cotización{% endblock %}
+
+{% block contenido %}
+<div class="card shadow-sm mx-auto" style="max-width: 900px;">
+  <div class="card-body p-4">
+    <h1 class="h3 mb-3">
+      Quitar {% if tipo == 'servicio' %}servicio{% else %}implemento{% endif %} de la cotización
+    </h1>
+
+    <p class="lead">
+      ¿Quieres quitar <strong>{{ nombre_detalle }}</strong> de la propuesta para
+      <strong>{{ solicitud.nombre_evento }}</strong>?
+    </p>
+
+    {% if tipo == 'servicio' %}
+      <p>El servicio seguirá disponible en el catálogo para otras cotizaciones y eventos.</p>
+    {% else %}
+      <p>El implemento seguirá disponible en el inventario; solo se quitará de esta cotización.</p>
+    {% endif %}
+
+    <form method="post" class="d-flex gap-2">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Sí, quitarlo</button>
+      <a href="{% url 'responder_solicitud' solicitud.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

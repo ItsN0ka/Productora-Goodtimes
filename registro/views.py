@@ -1,3 +1,7 @@
+from django.shortcuts import render
+
+# Create your views here.
+
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
@@ -5,6 +9,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from .forms import CustomUserCreationForm
 from .models import Perfil
 
+# Create your views here.
 def iniciar_sesion(request):
     if request.user.is_authenticated:
         if Perfil.objects.filter(user=request.user, rol__nombre='Administrador').exists():
@@ -13,11 +18,13 @@ def iniciar_sesion(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
-            user = form.getuser()
-            perfil,  = Perfil.objects.get_or_create(user=user)
+            user = form.get_user()
+            perfil, _ = Perfil.objects.get_or_create(user=user)
             login(request, user)
             if perfil.rol.nombre == 'Administrador':
                 return redirect('lista_eventos')
+            if perfil.rol.nombre == 'Cliente':
+                return redirect('mis_cotizaciones')
             return redirect('acceso_restringido')
     else:
         form =AuthenticationForm(request)
@@ -40,3 +47,4 @@ def registrar_usuario(request):
 def cerrar_sesion(request):
     logout(request)
     return redirect('iniciar_sesion')
+
