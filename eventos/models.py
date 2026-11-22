@@ -23,7 +23,7 @@ class Evento(models.Model):
         choices=Estado.choices,
         default=Estado.PENDIENTE,
     )
-    cantidad_asistencia = models.PositiveIntegerField(null=True, blank=True, validators=[MinValueValidator(1)],
+    cantidad_asistencia = models.PositiveIntegerField(null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(1000000)],
                                                       verbose_name="Cantidad de asistentes")
 
     def __str__(self):
