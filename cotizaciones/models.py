@@ -10,6 +10,13 @@ class SolicitudCotizacion(models.Model):
         ('ACE', 'Aceptada'),
         ('REC', 'Rechazada'),
     ]
+    MAGNITUDES = [
+        ('PEQ', 'Pequeño'),
+        ('MED', 'Mediano'),
+        ('GRA', 'Grande'),
+    ]
+    #tiempo que quedara bloqueado dependiendo la magnitud, si es pequeño o mediano
+    HORAS_BLOQUEO = {'PEQ': 4, 'MED': 8}
     #relacion uno a muchos un cliente puede solicitar muchas solicitudes 
     #PROTECT no permite eliminar el usuario si tiene solicitudes asociadas
     cliente = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='solicitudes', verbose_name='Cliente')
@@ -19,6 +26,8 @@ class SolicitudCotizacion(models.Model):
     lugar = models.CharField(max_length=45, verbose_name='Lugar')
     fecha = models.DateField(verbose_name='Fecha')
     hora = models.TimeField(verbose_name='Hora')
+    #la magnitud define cuantas horas del dia ocupa el evento
+    magnitud = models.CharField(max_length=3, choices=MAGNITUDES, default='PEQ', verbose_name='Magnitud')
     comentario = models.TextField(verbose_name='Comentario', blank=True)
     #por defecto la solicitud queda pendiente
     estado = models.CharField(max_length=3, choices=ESTADOS, default='PEN', verbose_name='Estado')
