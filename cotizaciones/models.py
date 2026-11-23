@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
 
 class SolicitudCotizacion(models.Model):
@@ -22,7 +22,7 @@ class SolicitudCotizacion(models.Model):
     cliente = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='solicitudes', verbose_name='Cliente')
     tipo_evento = models.CharField(max_length=45, verbose_name='Tipo de evento')
     nombre_evento = models.CharField(max_length=45, verbose_name='Nombre del evento')
-    cantidad_asistencia = models.PositiveIntegerField(verbose_name='Cantidad de asistentes')
+    cantidad_asistencia = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(1000000)], verbose_name='Cantidad de asistentes')
     lugar = models.CharField(max_length=45, verbose_name='Lugar')
     fecha = models.DateField(verbose_name='Fecha')
     hora = models.TimeField(verbose_name='Hora')
