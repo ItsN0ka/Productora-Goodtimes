@@ -38,7 +38,13 @@
                     <td>
                         <!-- el administrador prepara o continua la cotizacion -->
                         {% if solicitud.cotizacion %}
-                            <span class="text-muted">{{ solicitud.cotizacion.get_estado_display }}</span>
+                            {% if solicitud.cotizacion.estado == 'REC' %}
+                                <span class="badge bg-danger">{{ solicitud.cotizacion.get_estado_display }}</span>
+                            {% elif solicitud.cotizacion.estado == 'ACE' %}
+                                <span class="badge bg-success">{{ solicitud.cotizacion.get_estado_display }}</span>
+                            {% else %}
+                                <span class="text-muted">{{ solicitud.cotizacion.get_estado_display }}</span>
+                            {% endif %}
                             <a href="{% url 'responder_solicitud' solicitud.id %}" class="btn btn-outline-primary btn-sm">Ver</a>
                         {% else %}
                             <a href="{% url 'responder_solicitud' solicitud.id %}" class="btn btn-success btn-sm">Preparar cotización</a>

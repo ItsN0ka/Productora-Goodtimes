@@ -1,4 +1,4 @@
-{% extends "eventos/base.html" %}
+ {% extends "eventos/base.html" %}
 
 {% block titulo %}Eventos{% endblock %}
 
@@ -43,9 +43,27 @@
                             <td>{{ solicitud.lugar }}</td>
                             <td>{{ solicitud.cantidad_asistencia }}</td>
                             <td>
-                                <span class="badge text-bg-secondary">
-                                    {{ solicitud.get_estado_display }}
-                                </span>
+                                {% if solicitud.estado == 'ACE' %}
+                                    <span class="badge text-bg-success">
+                                        {{ solicitud.get_estado_display }}
+                                    </span>
+                                {% elif solicitud.estado == 'REC' %}
+                                    <span class="badge text-bg-danger">
+                                        {{ solicitud.get_estado_display }}
+                                    </span>
+                                {% elif solicitud.estado == 'PEN' %}
+                                    <span class="badge text-bg-warning text-dark">
+                                        {{ solicitud.get_estado_display }}
+                                    </span>
+                                {% elif solicitud.estado == 'INF' %}
+                                    <span class="badge text-bg-info text-dark">
+                                        {{ solicitud.get_estado_display }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge text-bg-secondary">
+                                        {{ solicitud.get_estado_display }}
+                                    </span>
+                                {% endif %}
                             </td>
                             <td>{{ solicitud.created_at|date:"d/m/Y H:i" }}</td>
                             <td>
@@ -54,8 +72,16 @@
                                        class="btn btn-sm btn-outline-primary">
                                         Continuar cotización
                                     </a>
-                                {% elif solicitud.cotizacion %}
+                                {% elif solicitud.cotizacion.estado == 'REC' %}
+                                    <span class="badge text-bg-danger">
+                                        {{ solicitud.cotizacion.get_estado_display }}
+                                    </span>
+                                {% elif solicitud.cotizacion.estado == 'ACE' %}
                                     <span class="badge text-bg-success">
+                                        {{ solicitud.cotizacion.get_estado_display }}
+                                    </span>
+                                {% elif solicitud.cotizacion %}
+                                    <span class="badge text-bg-info">
                                         {{ solicitud.cotizacion.get_estado_display }}
                                     </span>
                                 {% else %}
