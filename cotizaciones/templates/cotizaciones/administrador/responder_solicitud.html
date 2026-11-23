@@ -27,7 +27,13 @@
 {% else %}
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="h4 mb-0">Detalles de la propuesta</h2>
-    <span class="badge text-bg-secondary">{{ cotizacion.get_estado_display }}</span>
+    {% if cotizacion.estado == 'REC' %}
+      <span class="badge text-bg-danger">{{ cotizacion.get_estado_display }}</span>
+    {% elif cotizacion.estado == 'ACE' %}
+      <span class="badge text-bg-success">{{ cotizacion.get_estado_display }}</span>
+    {% else %}
+      <span class="badge text-bg-secondary">{{ cotizacion.get_estado_display }}</span>
+    {% endif %}
   </div>
 
   <form method="post" class="card card-body mb-4">
